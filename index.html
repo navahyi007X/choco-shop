@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kakao Bar – ช็อกโกแลตแท่งทำมือ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;600&display=swap">
+<style>
+:root{--bg:#eef2f1;--ink:#2a1a14;--teal:#0f4c4a;--gold:#c9861a;--line:#c5d3d0;--card:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:18px/1.6 Sarabun,sans-serif}
+h1,h2,h3{font-family:Mitr,sans-serif;font-weight:600;line-height:1.25;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+.hero{background:var(--teal);color:#f3ead8;padding:64px 0}
+.hero .wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center}
+.hero h1{font-size:clamp(34px,6vw,60px)}
+.hero p{max-width:30em;margin:16px 0 28px}
+.btn{display:inline-block;background:var(--gold);color:#fff;border:0;border-radius:8px;padding:12px 28px;font:600 18px Sarabun,sans-serif;cursor:pointer;text-decoration:none}
+.btn:hover{filter:brightness(1.08)}
+.btn:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.hero img{width:100%;border-radius:12px;display:block}
+section{padding:56px 0}
+h2{font-size:32px;margin-bottom:24px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.p{background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.p img{width:100%;display:block}
+.p div{padding:16px 20px 20px}
+.price{font:600 22px Mitr,sans-serif;color:var(--teal)}
+.sku{font-size:14px;color:#6a7a77}
+form{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:24px;display:grid;gap:16px;max-width:640px}
+label{display:grid;gap:4px;font-weight:600}
+input,textarea{font:inherit;padding:10px 12px;border:1px solid #9bb0ac;border-radius:8px;width:100%}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px}
+.row input{width:90px}
+.total{font:600 22px Mitr,sans-serif;text-align:right}
+#msg{font-weight:600;min-height:1.6em}
+footer{padding:28px 0;color:#5b6b68;font-size:15px}
+@media(max-width:720px){.hero .wrap{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div>
+    <h1>ช็อกโกแลตแท่ง<br>จากเมล็ดโกโก้ไทย</h1>
+    <p>ทำเป็นล็อตเล็ก คั่วและบดเอง เลือกได้สองรสชาติ ส่งตรงถึงบ้านคุณ</p>
+    <a class="btn" href="#order">สั่งซื้อเลย</a>
+  </div>
+  <img src="images/dark70.svg" alt="ช็อกโกแลตดาร์ก 70%">
+</div></header>
+
+<section><div class="wrap">
+  <h2>สินค้าของเรา</h2>
+  <div class="products" id="products"></div>
+</div></section>
+
+<section id="order"><div class="wrap">
+  <h2>สั่งซื้อ</h2>
+  <form id="f">
+    <div id="lines"></div>
+    <div class="total">รวม <span id="total">0</span> บาท</div>
+    <label>ชื่อผู้รับ<input name="name" required autocomplete="name"></label>
+    <label>เบอร์โทร<input name="phone" required inputmode="tel" pattern="[0-9]{9,10}" title="กรอกเบอร์โทร 9–10 หลัก" autocomplete="tel"></label>
+    <label>ที่อยู่จัดส่ง (บ้านเลขที่ ถนน ตำบล อำเภอ จังหวัด รหัสไปรษณีย์)<textarea name="address" rows="3" required autocomplete="street-address"></textarea></label>
+    <button class="btn" type="submit" id="go">ยืนยันการสั่งซื้อ</button>
+    <div id="msg" role="status"></div>
+  </form>
+</div></section>
+
+<footer><div class="wrap">Kakao Bar – งานนักศึกษา</div></footer>
+
+<script>
+// 1) วาง URL ของ Apps Script Web App ที่นี่ (ดู README)
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzM5to6Rps0T52lCB19AhKGOsqYx5Q7ZOh0_ZiWsdwaZqbczxNKN_Hes3Aoy-0245M/exec";
+
+// 2) สินค้า 2 SKU
+const PRODUCTS = [
+  {sku:"CHOC-D70", name:"ดาร์กช็อกโกแลต 70%", desc:"เข้ม ขมนุ่ม หอมโกโก้ น้ำหนัก 50 กรัม", price:89, img:"images/dark70.svg"},
+  {sku:"CHOC-MSS", name:"มิลค์ช็อกโกแลต เกลือทะเล", desc:"หวานมัน ตัดด้วยเกลือเล็กน้อย น้ำหนัก 50 กรัม", price:99, img:"images/milk-salt.svg"}
+];
+
+document.getElementById("products").innerHTML = PRODUCTS.map(p =>
+  `<article class="p"><img src="${p.img}" alt="${p.name}"><div><h3>${p.name}</h3><p>${p.desc}</p><div class="sku">รหัส ${p.sku}</div><div class="price">${p.price} บาท</div></div></article>`).join("");
+
+document.getElementById("lines").innerHTML = PRODUCTS.map(p =>
+  `<div class="row"><span>${p.name} (${p.price} บาท)</span><input type="number" min="0" max="50" value="0" data-sku="${p.sku}" aria-label="จำนวน ${p.name}"></div>`).join("");
+
+const f = document.getElementById("f"), msg = document.getElementById("msg");
+const qtyInputs = [...f.querySelectorAll("[data-sku]")];
+function calc(){
+  const t = qtyInputs.reduce((s,i)=>s + (+i.value||0) * PRODUCTS.find(p=>p.sku===i.dataset.sku).price, 0);
+  document.getElementById("total").textContent = t; return t;
+}
+f.addEventListener("input", calc);
+
+f.addEventListener("submit", async e => {
+  e.preventDefault();
+  const items = qtyInputs.filter(i=>+i.value>0).map(i=>{
+    const p = PRODUCTS.find(p=>p.sku===i.dataset.sku);
+    return {sku:p.sku, product:p.name, qty:+i.value, price:p.price};
+  });
+  if(!items.length){ msg.textContent = "กรุณาเลือกสินค้าอย่างน้อย 1 ชิ้น"; return; }
+  const d = new FormData(f);
+  const order = {name:d.get("name"), phone:d.get("phone"), address:d.get("address"), items, total:calc()};
+  const go = document.getElementById("go"); go.disabled = true; msg.textContent = "กำลังส่งคำสั่งซื้อ...";
+  try{
+    await fetch(SHEET_URL, {method:"POST", mode:"no-cors", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(order)});
+    msg.textContent = "รับคำสั่งซื้อแล้ว ขอบคุณค่ะ"; f.reset(); calc();
+  }catch(err){ msg.textContent = "ส่งไม่สำเร็จ กรุณาลองใหม่อีกครั้ง"; }
+  go.disabled = false;
+});
+</script>
+</body>
+</html>
